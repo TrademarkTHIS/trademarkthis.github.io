@@ -66,7 +66,13 @@ body {
 }
 
 .site-header .container {
-    padding: 10px 20px;
+    padding: 6px 6px;
+}
+
+.site-header {
+    position: relative;
+    padding-top: 6px;
+    padding-bottom: 6px;
 }
 
 .home-link {
@@ -79,7 +85,6 @@ body {
     border-radius: 0;
 }
 
-/* Blog link shown only on post pages (inserted by _layouts/post.html) */
 .blog-link {
     position: fixed;
     top: 12px;
@@ -103,12 +108,12 @@ body {
 
 h1 {
     font-size: 2.2rem;
-    margin: 0 0 20px 0;
+    margin: 0 0 10px 0;
     color: #ffffff;
 }
 
 p {
-    margin: 16px 0;
+    margin: 6px 0;
     color: #c9c9c9;
     line-height: 1.6;
 }
@@ -123,13 +128,17 @@ a:hover {
 }
 
 .post-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .post-list li {
-        margin: 0.6rem 0;
+    margin: 0.6rem 0;
+}
+
+.post-list li::marker {
+    display: none;
 }
 .post-content img {
     max-width: 100%;
@@ -137,10 +146,4 @@ a:hover {
     display: block;
     margin: 0.5rem auto;
     box-sizing: border-box;
-}
-
-@media (min-width: 700px) {
-    .container {
-        padding-top: 40px;
-    }
 }
