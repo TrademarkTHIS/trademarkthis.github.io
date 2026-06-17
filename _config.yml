@@ -1,0 +1,9 @@
+title: Jacob Vroman
+description: Software developer portfolio
+markdown: kramdown
+collections:
+  posts:
+    output: true
+    permalink: /blog/:slug/
+exclude:
+  - node_modules
