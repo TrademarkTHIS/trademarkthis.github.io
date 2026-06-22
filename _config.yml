@@ -7,3 +7,7 @@ collections:
     permalink: /blog/:slug/
 exclude:
   - node_modules
+
+kramdown:
+  input: GFM
+  hard_wrap: true
