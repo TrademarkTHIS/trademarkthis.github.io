@@ -22,6 +22,7 @@ const soundCollections = {
     ],
     shuffle: ["card-shuffle.ogg"],
 };
+const visibleDeckSize = 6;
 
 const dealerCardsElement = document.getElementById("dealer-cards");
 const playerCardsElement = document.getElementById("player-cards");
@@ -96,6 +97,18 @@ function makeCardImage(src, alt) {
     return image;
 }
 
+function makeDeckBack() {
+    const image = makeCardImage(cardBack, "");
+    image.setAttribute("aria-hidden", "true");
+    return image;
+}
+
+function initializeDeckStack() {
+    for (let index = 0; index < visibleDeckSize; index += 1) {
+        deckStackElement.append(makeDeckBack());
+    }
+}
+
 function playRandomSound(collection) {
     const sounds = soundCollections[collection];
     const sound = sounds[Math.floor(Math.random() * sounds.length)];
@@ -133,37 +146,46 @@ function renderHand(container, hand, hideHoleCard) {
 
 async function animateCard(image) {
     const deckTopCard = deckStackElement.lastElementChild;
-    if (!deckTopCard || typeof image.animate !== "function" ||
-        (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+    if (!deckTopCard) {
         return;
     }
 
     const source = deckTopCard.getBoundingClientRect();
     const target = image.getBoundingClientRect();
-    const flight = makeCardImage(image.src, "");
-    flight.classList.add("dealing-card");
-    flight.setAttribute("aria-hidden", "true");
-    flight.style.left = `${source.left}px`;
-    flight.style.top = `${source.top}px`;
-    flight.style.width = `${target.width}px`;
-    flight.style.height = `${target.height}px`;
-    document.body.append(flight);
+    deckTopCard.src = image.src;
+    deckTopCard.remove();
+    deckStackElement.append(makeDeckBack());
+
+    const reducedMotion = window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (typeof image.animate !== "function" || reducedMotion) {
+        return;
+    }
+
+    deckTopCard.classList.add("dealing-card");
+    deckTopCard.style.left = `${source.left}px`;
+    deckTopCard.style.top = `${source.top}px`;
+    deckTopCard.style.width = `${source.width}px`;
+    deckTopCard.style.height = `${source.height}px`;
+    document.body.append(deckTopCard);
     image.style.visibility = "hidden";
     playRandomSound("slide");
 
-    const horizontalDistance = target.left - source.left;
-    const verticalDistance = target.top - source.top;
+    const horizontalDistance = target.left + target.width / 2 - source.left - source.width / 2;
+    const verticalDistance = target.top + target.height / 2 - source.top - source.height / 2;
+    const scale = target.width / source.width;
     const rotation = (Math.random() * 6) - 3;
-    const animation = flight.animate(
+    deckTopCard.style.transformOrigin = "center";
+    const animation = deckTopCard.animate(
         [
-            { transform: "translate(0, 0) rotate(0deg)" },
-            { transform: `translate(${horizontalDistance}px, ${verticalDistance}px) rotate(${rotation}deg)` },
+            { transform: "translate(0, 0) scale(1) rotate(0deg)" },
+            { transform: `translate(${horizontalDistance}px, ${verticalDistance}px) scale(${scale}) rotate(${rotation}deg)` },
         ],
         { duration: 420, easing: "cubic-bezier(0.2, 0.7, 0.25, 1)" }
     );
 
     await animation.finished;
-    flight.remove();
+    deckTopCard.remove();
     image.style.visibility = "";
 }
 
@@ -307,6 +329,7 @@ function stand() {
     }
 }
 
+initializeDeckStack();
 dealButton.addEventListener("click", deal);
 hitButton.addEventListener("click", hit);
 standButton.addEventListener("click", stand);

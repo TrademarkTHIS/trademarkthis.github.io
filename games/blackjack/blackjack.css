@@ -49,8 +49,8 @@ h1 {
 
 .deck-stack {
     position: relative;
-    width: 76px;
-    height: 76px;
+    width: 112px;
+    height: 112px;
     margin: 0 auto;
 }
 
@@ -58,8 +58,8 @@ h1 {
     position: absolute;
     inset: 0;
     display: block;
-    width: 76px;
-    height: 76px;
+    width: 112px;
+    height: 112px;
     image-rendering: pixelated;
 }
 
@@ -218,6 +218,12 @@ button:disabled {
 }
 
 @media (max-width: 480px) {
+    .deck-stack,
+    .deck-stack img {
+        width: 88px;
+        height: 88px;
+    }
+
     .cards img {
         flex-basis: 88px;
         width: 88px;
