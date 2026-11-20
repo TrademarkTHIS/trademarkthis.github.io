@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/JV.png">
+    <meta name="description" content="Browse the games available on Jacob Vroman's site.">
+    <title>Games | JV</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="games.css">
+    <script src="coin-wallet.js" defer></script>
+</head>
+<body class="games-page">
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="home-link" href="../">Home</a>
+        </div>
+    </header>
+    <div class="blob"></div>
+    <div class="blob"></div>
+    <div class="blob"></div>
+
+    <main class="container games-container">
+        <div class="game-toolbar">
+            <div class="coin-wallet" aria-label="Your coin balance">
+                <img src="images/Coins/coin_01.png" alt="">
+                <span data-coin-count aria-live="polite">0</span>
+                <span>coins</span>
+            </div>
+        </div>
+        <p class="coin-storage-status" data-coin-storage-status role="status" hidden></p>
+
+        <header class="games-heading">
+            <h1>Games</h1>
+        </header>
+
+        <section class="game-list" aria-label="Available games">
+            <a class="game-card" href="blackjack/">
+                <span class="game-card-action">Blackjack</span>
+            </a>
+        </section>
+    </main>
+    <footer class="games-page-footer">Coin images from <a href="https://kenney.nl/assets/puzzle-pack-2" target="_blank" rel="noopener noreferrer">Kenney's Puzzle Pack 2</a>.</footer>
+</body>
+</html>

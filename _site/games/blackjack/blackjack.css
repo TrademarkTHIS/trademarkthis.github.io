@@ -1,0 +1,186 @@
+* {
+    box-sizing: border-box;
+}
+
+.game-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.game-page > .game-container {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+}
+
+.blackjack-game {
+    flex: 1 0 auto;
+    width: 100%;
+}
+
+.game-header {
+    text-align: center;
+}
+
+.eyebrow,
+.label {
+    color: #a7b0c2;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+}
+
+h1 {
+    margin: 0;
+    font-size: clamp(2rem, 8vw, 3rem);
+}
+
+.rules {
+    margin: 10px 0 22px;
+    color: #c4cad5;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.hand {
+    min-height: 150px;
+    padding: 14px 0;
+}
+
+.hand-heading {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+h2 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.hand-score {
+    color: #a7b0c2;
+    font-size: 0.9rem;
+}
+
+.cards {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 10px;
+    width: max-content;
+    max-width: 100%;
+    height: 124px;
+    margin: 0 auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+}
+
+.cards img {
+    display: block;
+    flex: 0 0 112px;
+    width: 112px;
+    height: 112px;
+    align-self: flex-start;
+    image-rendering: pixelated;
+}
+
+.message {
+    min-height: 1.5em;
+    margin: 18px 0 14px;
+    color: #e5e7eb;
+    text-align: center;
+    font-weight: 700;
+}
+
+.game-page .game-container .coin-storage-status {
+    max-width: none;
+    margin: 0 0 10px;
+    text-align: right;
+}
+
+.game-page .game-container .eyebrow {
+    max-width: none;
+    margin: 0 0 8px;
+    text-align: center;
+}
+
+.game-page .game-container .message {
+    max-width: none;
+    margin: 18px 0 14px;
+    text-align: center;
+}
+
+.game-page .game-container .footer-note {
+    max-width: none;
+    margin: 20px 0 0;
+    text-align: center;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+button {
+    min-height: 42px;
+    padding: 9px 16px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 3px;
+}
+
+button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.primary-button {
+    color: #86efac;
+}
+
+.footer-note {
+    margin: 20px 0 0;
+    font-size: 0.85rem;
+}
+
+.page-footer {
+    width: 100%;
+    margin: auto 0 0;
+    padding-top: 16px;
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+    .cards img {
+        flex-basis: 88px;
+        width: 88px;
+        height: 88px;
+    }
+
+    .cards {
+        height: 100px;
+    }
+}

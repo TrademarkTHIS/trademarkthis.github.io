@@ -85,7 +85,8 @@ body {
     border-radius: 0;
 }
 
-.blog-link {
+.blog-link,
+.section-link {
     position: fixed;
     top: 12px;
     left: 72px;
@@ -97,7 +98,8 @@ body {
     text-decoration: none;
 }
 
-.blog-link:hover {
+.blog-link:hover,
+.section-link:hover {
     text-decoration: underline;
 }
 

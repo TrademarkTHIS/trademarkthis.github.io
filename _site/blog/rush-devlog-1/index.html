@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="/JV.png">
+  <title>Rush Game Project</title>
+  <meta name="description" content="Software developer portfolio">
+  <link rel="stylesheet" href="/style.css">
+  
+  
+</head>
+<body class="post-page">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="home-link" href="/">Home</a>
+    </div>
+  </header>
+  
+  
+  <div class="blob"></div>
+  <div class="blob"></div>
+  <div class="blob"></div>
+
+  <div class="container">
+    <a class="blog-link" href="/blog/">Blog</a>
+<article>
+  <h1>Rush Game Project</h1>
+  <p><small>June 21, 2026</small></p>
+  <div class="post-content">
+    <p>I’ve been working on a game project as of late. Here’s a little background. I recently discovered that you can swap out the physics engine in the game engine <a href="https://godotengine.org/">Godot</a>. The built-in physics engine isn’t great, so I did a little bit of research. One of the easier engines to swap in is called <a href="https://github.com/jrouwe/joltphysics">Jolt</a>. It’s free, and it was designed for VR so you know it’s good. After playing around with Godot and the Jolt engine for a bit, I had a idea for a small game. It’s not a strictly original idea, but it’s an idea nonetheless. My goal is to create a small online PVP game for some friends and I to play during some of the off hours of the day. Something unranked, low stakes, and almost luck based. For this, I thought of King of the Hill. It would be simple: place a small platform down, spawn some physics based players, let them smack each other around. I’ve given this project the working title “Rush” because your goal is to rush each other.</p>
+
+<p>To start out, I needed to learn Godot’s scripting language <code class="language-plaintext highlighter-rouge">GDScript</code>, which is still an ongoing hobby of mine. It’s a pretty simple language, and it’s not too dissimilar to Python. That being said, it does have its quirks. For example, I wanted to use a <code class="language-plaintext highlighter-rouge">switch</code> statement for something, but in GDScript it’s called <code class="language-plaintext highlighter-rouge">match</code>. It hadn’t occurred to me that they would name it something else, so I thought this type of statement simply didn’t exist within GDScript. I only figured this out after looking into how I might create a macro for it.</p>
+
+<p>Any Godot game you might play is built using their custom architecture called <code class="language-plaintext highlighter-rouge">nodes</code>. These are essentially objects (in the programming sense). The default nodes that Godot comes with are things like the player, a cube, the floor, a camera, and so on. These all inherit basic nodes like Node, Node2D, and Node3D. As far as I can tell, the only difference between the base Node and the dimensional ones is that the dimensional nodes have in-game coordinates. When I started out, I used the default player node. After getting some basic movement going, I quickly learned that this wouldn’t work for the project and that I would have to make my own custom player node. The default player node exposes a function called <code class="language-plaintext highlighter-rouge">move_and_slide()</code>. As it turns out, this function does not respect the physics engine in the slightest. This goes directly against my goal of making the players be physics based. In the end, it meant that I needed to inherit the RigidBody node rather than the player node. Down the line, this complicated things.</p>
+
+<p>To get the network part of the game working, I opted to use a plugin called <a href="https://foxssake.github.io/netfox/latest/">Netfox</a>. I chose it over the base multiplayer nodes because it includes a feature called network rollback. The basic premise of network rollback is that when you recieve a network update, it will include a history of the other player’s input. On the client side, we still use basic interpolation to smooth out other players. Once we recieve a new update, we can use the input history to accurately replicate their current state on our end. Of course, using this system meant completely redesigning the player controller.</p>
+
+<p>Even before reading the Netfox documentation (which essentially recommends this exact approach), I knew I wanted to implement the player as a state machine. Doing so makes it much easier to synchronize specific aspects of the player, such as animations, while also maintaining a clear and predictable execution flow.</p>
+
+<p>I settled on six core player states:</p>
+
+<p><strong>IDLE</strong>      - The player is not moving.<br />
+<strong>WALK</strong>      - The player is walking in any direction.<br />
+<strong>RUN</strong>       - The player is running in any direction.<br />
+<strong>JUMP</strong>      - The player has initiated a jump while touching the ground.<br />
+<strong>FALL</strong>      - The player is not touching the ground.<br />
+<strong>TIPPED</strong>    - The player has fallen over.</p>
+
+<p>In the <strong>JUMP</strong>, <strong>FALL</strong>, and <strong>TIPPED</strong> states, parts of the player’s input are disabled, such as movement. This is more of a gameplay decision than a basic controller decision. It forces the consequences of certain actions to play out. For example, when you jump in real life, you’re not really able to change your position in mid air. On top of that, it just feels right; like your brain already expects to lose control in those states.</p>
+
+<p>Now that the player controller was mostly ready, all that was left was to attach a Netfox rollback network node to the new player object.</p>
+
+<p>Godot’s <em>default</em> physics engine is non-deterministic. This essentially means that if you give it the same parameters twice, it can produce different results each time. What I learned is that because of this, Netfox’s rollback system is not designed to work with RigidBodies, since their state cannot be reliably reproduced. Instead, the rollback system is primarily intended to work with the default player node, which does not rely on the physics engine. Thankfully, Netfox nodes do support synchronizing RigidBodies (just not rollback), as well as interpolating their position, so it wasn’t a complete loss. Even so, I once again had to make major tweaks to the player controller to accomidate for this shortsight.</p>
+
+<p>Once I had this very simple demo setup, I got a suggestion from a friend. Up until this point, the floor had been a single medium-large tile. His suggestion was to instead, subdivide the floor into several tiles which can all be made to fall into the void. Oon paper this should be easy to setup, and it introduces a small amount of originality into the mix. I started by creating a basic tile node, made it’s default state frozen, and gave it two hitboxes. One hitbox just above for object to it’s unfreezing, and the basic collision hitbox. I then created a small platform script which just populates the scene with <code class="language-plaintext highlighter-rouge">N x M</code> tiles. When a tile is hit, say by a ball, the tile is unfrozen and dropped into the void reducing the play area.</p>
+
+<p>The first issue I had with the platfrom was that the player’s movement would hiccup on the seam between two tiles, even if they were perfectly flush. This was probably due to some type of floating-point error; either way, it was annoying. To solve it, I edited the platform script so that it would generate a single combined hitbox/mesh in the size and shape of the tiles. Each time a tile was unfrozen, the mesh would update to remove that section. Now the movement across the platform was smooth.</p>
+
+<p>After getting the feel of the floor right, I tested it over a networked connection. Each of these tiles needed to be network-synced, and because they are physics-based, there is no way to use the rollback node on them. This meant sending the X, Y, and Z coordinates of every tile (which is a lot, since it’s an <code class="language-plaintext highlighter-rouge">N × M</code> grid) over the network every update. Even with just two players connected locally, this performed very poorly. I quickly had an idea for how to solve this. I was already creating an invisible hitbox for all the tiles and updating it when a tile was removed, so why not just render that instead and spawn a tile only when a chunk is hit? I implemented this concept immediately, and from the player’s perspective, it’s seamless.</p>
+
+<p>All that was left was to create a proper user interface. What I ended up with isn’t anything special, and is mostly composed of assets from <a href="https://kenney.nl/">Kenney</a>, but it works.</p>
+
+<p><img src="https://files.catbox.moe/lv8ck0.png" alt="A grey menu consisting of a join and host button" /></p>
+
+<p>This menu may be pretty barebones, but it allows you to set your in-game username and direct connect to a host. When you click on the join or host button, you are redirected to the lobby scene where only the host can start the game.</p>
+
+<p><img src="https://files.catbox.moe/rj86pp.png" alt="A grey menu consisting of a list of players, a start, and a leave button" /></p>
+
+<p>If you are the host, clicking the start button sends an RPC singal to all of the connected clients to switch to the platform scene.</p>
+
+<p><img src="https://files.catbox.moe/er2v81.png" alt="Two viking-like skeletons on a white platform with portions removed from the floor" /></p>
+
+<p>Once in the scene, you can try to knock each other off.</p>
+
+<p>In closing, there are several things left to do should I be tempted to continue working on this project. In the short term, I would like to add items that the player can use. As of right now, the player can summon a physics based ball object that destroys the ground. I would prefer if this mechanic were attached to an item, like a blunderbuss for the player to hold. I would also like to add additional game modes to select from. This would include a default King of the Hill game mode, as well as this Break the Ice game mode. Overall, pretty fun to create something like this.</p>
+
+<p>If you would like to try it out, you can download it <a href="https://files.catbox.moe/vtfjxz.zip">here</a>.</p>
+
+  </div>
+</article>
+
+  </div>
+
+</body>
+</html>

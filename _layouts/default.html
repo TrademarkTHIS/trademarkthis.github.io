@@ -5,22 +5,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="{{ '/JV.png' | relative_url }}">
   <title>{{ page.title | default: site.title }}</title>
-  <meta name="description" content="{{ site.description }}">
+  <meta name="description" content="{{ page.description | default: site.description }}">
   <link rel="stylesheet" href="{{ '/style.css' | relative_url }}">
+  {% for stylesheet in page.stylesheets %}
+  <link rel="stylesheet" href="{{ stylesheet | relative_url }}">
+  {% endfor %}
+  {% for script in page.scripts %}
+  <script src="{{ script | relative_url }}" defer></script>
+  {% endfor %}
 </head>
-<body{% if page.layout == 'post' %} class="post-page"{% endif %}>
+<body{% if page.layout == 'post' or page.game_page %} class="post-page{% if page.game_page %} game-page{% endif %}"{% endif %}>
   <header class="site-header">
     <div class="container header-inner">
       <a class="home-link" href="{{ '/' | relative_url }}">{{ "Home" }}</a>
     </div>
   </header>
+  {% if page.section_link_label and page.section_link_url %}
+  <a class="section-link" href="{{ page.section_link_url | relative_url }}">{{ page.section_link_label }}</a>
+  {% endif %}
   
   <div class="blob"></div>
   <div class="blob"></div>
   <div class="blob"></div>
 
-  <div class="container">
+  <div class="container{% if page.game_page %} game-container{% endif %}">
     {{ content }}
   </div>
 

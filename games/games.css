@@ -1,0 +1,127 @@
+.game-toolbar {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 60;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    min-height: 36px;
+}
+
+.coin-wallet {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 36px;
+    color: #f3f4f6;
+    font-variant-numeric: tabular-nums;
+}
+
+.coin-wallet img {
+    display: block;
+    width: 23px;
+    height: 23px;
+}
+
+.coin-storage-status {
+    margin: 0 0 10px;
+    color: #fca5a5;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    text-align: right;
+}
+
+.games-container {
+    max-width: 760px;
+}
+
+.games-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.games-page .games-container {
+    flex: 1 0 auto;
+    width: 100%;
+}
+
+.games-page-footer {
+    width: min(100%, 760px);
+    margin: auto auto 0;
+    padding: 16px 16px 10px;
+    color: #c9c9c9;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.games-heading {
+    margin: 32px 0 26px;
+}
+
+.games-heading h1 {
+    margin: 0;
+}
+
+.games-heading p {
+    color: #c9c9c9;
+}
+
+.games-eyebrow {
+    margin-bottom: 6px;
+    color: #a7b0c2 !important;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.game-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+}
+
+.game-card {
+    display: grid;
+    gap: 10px;
+    color: #e6e6e6;
+    text-decoration: none;
+}
+
+.game-card:hover {
+    text-decoration: underline;
+}
+
+.game-card:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 3px;
+}
+
+.game-card-title {
+    color: #ffffff;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.game-card-description {
+    color: #c9c9c9;
+    line-height: 1.5;
+}
+
+.game-card-action {
+    color: #9ab8ff;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+    .games-container {
+        padding-right: 14px;
+        padding-left: 14px;
+    }
+
+    .games-heading {
+        margin-top: 24px;
+    }
+}

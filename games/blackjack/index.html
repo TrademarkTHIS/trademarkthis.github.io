@@ -1,0 +1,53 @@
+---
+layout: default
+title: Blackjack | JV
+description: A casual blackjack game. Win a hand to earn a coin.
+game_page: true
+section_link_label: Games
+section_link_url: /games/
+stylesheets:
+  - /games/games.css
+  - /games/blackjack/blackjack.css
+scripts:
+  - /games/coin-wallet.js
+  - /games/blackjack/blackjack.js
+---
+<main class="blackjack-game">
+    <div class="game-toolbar">
+        <div class="coin-wallet" aria-label="Your coin balance">
+            <img src="../images/Coins/coin_01.png" alt="">
+            <span data-coin-count aria-live="polite">0</span>
+            <span>coins</span>
+        </div>
+    </div>
+    <p class="coin-storage-status" data-coin-storage-status role="status" hidden></p>
+    <header class="game-header">
+        <p class="eyebrow">Win a hand to earn a coin</p>
+    </header>
+
+    <section class="hand dealer-hand" aria-labelledby="dealer-title">
+        <div class="hand-heading">
+            <h2 id="dealer-title">Dealer</h2>
+            <span id="dealer-score" class="hand-score"></span>
+        </div>
+        <div id="dealer-cards" class="cards" tabindex="0" aria-label="Dealer cards"></div>
+    </section>
+
+    <section class="hand player-hand" aria-labelledby="player-title">
+        <div class="hand-heading">
+            <h2 id="player-title">You</h2>
+            <span id="player-score" class="hand-score"></span>
+        </div>
+        <div id="player-cards" class="cards" tabindex="0" aria-label="Your cards"></div>
+    </section>
+
+    <p id="message" class="message" role="status" aria-live="polite">Deal to start a hand.</p>
+
+    <div class="actions">
+        <button id="deal-button" class="primary-button" type="button">Deal</button>
+        <button id="hit-button" type="button" disabled>Hit</button>
+        <button id="stand-button" type="button" disabled>Stand</button>
+    </div>
+    <p class="footer-note"><a href="../../">Back to main site</a></p>
+</main>
+<footer class="page-footer">Card images from <a href="https://kenney.nl/assets/playing-cards-pack" target="_blank" rel="noopener noreferrer">Kenney's Playing Cards Pack</a>.</footer>
