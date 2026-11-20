@@ -40,6 +40,7 @@ let dealerHand = [];
 let handInProgress = false;
 let isAnimating = false;
 let dealerRevealed = true;
+let activeCardDrag = null;
 
 function createDeck() {
     const cards = [];
@@ -144,48 +145,258 @@ function renderHand(container, hand, hideHoleCard) {
     });
 }
 
+function cancelActiveCardDrag() {
+    if (!activeCardDrag) {
+        return;
+    }
+
+    const drag = activeCardDrag;
+    activeCardDrag = null;
+    stopCardDrag(drag);
+    drag.original.style.visibility = drag.originalVisibility;
+    drag.overlay.remove();
+}
+
+function stopCardDrag(drag) {
+    document.removeEventListener("pointermove", moveDraggedCard);
+    document.removeEventListener("pointerup", releaseDraggedCard);
+    document.removeEventListener("pointercancel", releaseDraggedCard);
+    cancelAnimationFrame(drag.frameId);
+}
+
+function updateDraggedCard(drag) {
+    drag.overlay.style.left = `${drag.x}px`;
+    drag.overlay.style.top = `${drag.y}px`;
+    drag.overlay.style.transform = `rotate(${drag.angle}deg)`;
+}
+
+function animateDraggedCard(timestamp) {
+    const drag = activeCardDrag;
+    if (!drag) {
+        return;
+    }
+
+    const elapsed = Math.min((timestamp - drag.lastFrameTime) / 1000, 0.032);
+    drag.lastFrameTime = timestamp;
+
+    if (drag.dragging && timestamp - drag.lastMoveTime > 80) {
+        drag.targetAngle = 0;
+    }
+
+    const angularAcceleration = (drag.targetAngle - drag.angle) * 110 - drag.angularVelocity * 19;
+    drag.angularVelocity += angularAcceleration * elapsed;
+    drag.angle += drag.angularVelocity * elapsed;
+
+    if (!drag.dragging) {
+        const horizontalAcceleration = (drag.originX - drag.x) * 90 - drag.velocityX * 19;
+        const verticalAcceleration = (drag.originY - drag.y) * 90 - drag.velocityY * 19;
+        drag.velocityX += horizontalAcceleration * elapsed;
+        drag.velocityY += verticalAcceleration * elapsed;
+        drag.x += drag.velocityX * elapsed;
+        drag.y += drag.velocityY * elapsed;
+    }
+
+    updateDraggedCard(drag);
+
+    const settled = Math.abs(drag.originX - drag.x) < 0.5 &&
+        Math.abs(drag.originY - drag.y) < 0.5 &&
+        Math.abs(drag.velocityX) < 5 &&
+        Math.abs(drag.velocityY) < 5 &&
+        Math.abs(drag.angle) < 0.2 &&
+        Math.abs(drag.angularVelocity) < 1;
+    if (!drag.dragging && settled) {
+        cancelActiveCardDrag();
+        return;
+    }
+
+    drag.frameId = requestAnimationFrame(animateDraggedCard);
+}
+
+function moveDraggedCard(event) {
+    const drag = activeCardDrag;
+    if (!drag || !drag.dragging || event.pointerId !== drag.pointerId) {
+        return;
+    }
+
+    event.preventDefault();
+    const now = performance.now();
+    const elapsed = Math.max(now - drag.lastPointerTime, 1);
+    drag.velocityX = Math.max(-1800, Math.min(1800, ((event.clientX - drag.lastPointerX) / elapsed) * 1000));
+    drag.velocityY = Math.max(-1800, Math.min(1800, ((event.clientY - drag.lastPointerY) / elapsed) * 1000));
+    drag.targetAngle = Math.max(-30, Math.min(30, drag.velocityX * 0.018 + drag.velocityY * 0.006));
+    drag.lastPointerX = event.clientX;
+    drag.lastPointerY = event.clientY;
+    drag.lastPointerTime = now;
+    drag.lastMoveTime = now;
+    drag.x = event.clientX - drag.grabX;
+    drag.y = event.clientY - drag.grabY;
+    updateDraggedCard(drag);
+}
+
+function releaseDraggedCard(event) {
+    const drag = activeCardDrag;
+    if (!drag || event.pointerId !== drag.pointerId) {
+        return;
+    }
+
+    if (event.type === "pointerup") {
+        moveDraggedCard(event);
+    }
+    drag.dragging = false;
+    drag.targetAngle = 0;
+    document.removeEventListener("pointermove", moveDraggedCard);
+    document.removeEventListener("pointerup", releaseDraggedCard);
+    document.removeEventListener("pointercancel", releaseDraggedCard);
+
+    if (drag.reducedMotion) {
+        cancelActiveCardDrag();
+        return;
+    }
+    drag.frameId = requestAnimationFrame(animateDraggedCard);
+}
+
+function startDraggingCard(event) {
+    if (event.button !== 0 || event.isPrimary === false || !(event.target instanceof HTMLImageElement)) {
+        return;
+    }
+
+    cancelActiveCardDrag();
+    event.preventDefault();
+
+    const original = event.target;
+    const bounds = original.getBoundingClientRect();
+    const overlay = original.cloneNode();
+    overlay.className = "card-dragging";
+    overlay.alt = "";
+    overlay.draggable = false;
+    overlay.setAttribute("aria-hidden", "true");
+
+    const grabX = event.clientX - bounds.left;
+    const grabY = event.clientY - bounds.top;
+    const now = performance.now();
+    const reducedMotion = window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    activeCardDrag = {
+        original,
+        originalVisibility: original.style.visibility,
+        overlay,
+        pointerId: event.pointerId,
+        grabX,
+        grabY,
+        originX: bounds.left,
+        originY: bounds.top,
+        width: bounds.width,
+        height: bounds.height,
+        x: bounds.left,
+        y: bounds.top,
+        velocityX: 0,
+        velocityY: 0,
+        angle: 0,
+        angularVelocity: 0,
+        targetAngle: 0,
+        dragging: true,
+        reducedMotion,
+        lastPointerX: event.clientX,
+        lastPointerY: event.clientY,
+        lastPointerTime: now,
+        lastMoveTime: now,
+        lastFrameTime: now,
+        frameId: 0,
+    };
+
+    overlay.style.left = `${bounds.left}px`;
+    overlay.style.top = `${bounds.top}px`;
+    overlay.style.width = `${bounds.width}px`;
+    overlay.style.height = `${bounds.height}px`;
+    overlay.style.transformOrigin = `${grabX}px ${grabY}px`;
+    document.body.append(overlay);
+    original.style.visibility = "hidden";
+
+    document.addEventListener("pointermove", moveDraggedCard);
+    document.addEventListener("pointerup", releaseDraggedCard);
+    document.addEventListener("pointercancel", releaseDraggedCard);
+    activeCardDrag.frameId = requestAnimationFrame(animateDraggedCard);
+}
+
+function startDraggingDeckCard(event) {
+    if (event.target === deckStackElement.lastElementChild) {
+        startDraggingCard(event);
+    }
+}
+
 async function animateCard(image) {
     const deckTopCard = deckStackElement.lastElementChild;
     if (!deckTopCard) {
         return;
     }
 
-    const source = deckTopCard.getBoundingClientRect();
+    const heldDeckDrag = activeCardDrag &&
+        activeCardDrag.dragging &&
+        activeCardDrag.original === deckTopCard
+        ? activeCardDrag
+        : null;
+    if (activeCardDrag && activeCardDrag !== heldDeckDrag) {
+        cancelActiveCardDrag();
+    }
+
+    const source = heldDeckDrag
+        ? {
+            left: heldDeckDrag.x,
+            top: heldDeckDrag.y,
+            width: heldDeckDrag.width,
+            height: heldDeckDrag.height,
+        }
+        : deckTopCard.getBoundingClientRect();
     const target = image.getBoundingClientRect();
-    deckTopCard.src = image.src;
+    const flight = heldDeckDrag ? heldDeckDrag.overlay : deckTopCard;
+    flight.src = image.src;
     deckTopCard.remove();
     deckStackElement.append(makeDeckBack());
+
+    if (heldDeckDrag) {
+        activeCardDrag = null;
+        stopCardDrag(heldDeckDrag);
+        flight.classList.remove("card-dragging");
+    }
 
     const reducedMotion = window.matchMedia &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (typeof image.animate !== "function" || reducedMotion) {
+        if (heldDeckDrag) {
+            flight.remove();
+        }
         return;
     }
 
-    deckTopCard.classList.add("dealing-card");
-    deckTopCard.style.left = `${source.left}px`;
-    deckTopCard.style.top = `${source.top}px`;
-    deckTopCard.style.width = `${source.width}px`;
-    deckTopCard.style.height = `${source.height}px`;
-    document.body.append(deckTopCard);
+    flight.classList.add("dealing-card");
+    flight.style.left = `${source.left}px`;
+    flight.style.top = `${source.top}px`;
+    flight.style.width = `${source.width}px`;
+    flight.style.height = `${source.height}px`;
+    if (!heldDeckDrag) {
+        flight.style.transformOrigin = "center";
+        document.body.append(flight);
+    }
     image.style.visibility = "hidden";
     playRandomSound("slide");
 
     const horizontalDistance = target.left + target.width / 2 - source.left - source.width / 2;
     const verticalDistance = target.top + target.height / 2 - source.top - source.height / 2;
     const scale = target.width / source.width;
-    const rotation = (Math.random() * 6) - 3;
-    deckTopCard.style.transformOrigin = "center";
-    const animation = deckTopCard.animate(
+    const startingTransform = heldDeckDrag
+        ? `rotate(${heldDeckDrag.angle}deg)`
+        : "translate(0, 0) scale(1) rotate(0deg)";
+    const rotation = heldDeckDrag ? 0 : (Math.random() * 6) - 3;
+    const animation = flight.animate(
         [
-            { transform: "translate(0, 0) scale(1) rotate(0deg)" },
+            { transform: startingTransform },
             { transform: `translate(${horizontalDistance}px, ${verticalDistance}px) scale(${scale}) rotate(${rotation}deg)` },
         ],
         { duration: 420, easing: "cubic-bezier(0.2, 0.7, 0.25, 1)" }
     );
 
     await animation.finished;
-    deckTopCard.remove();
+    flight.remove();
     image.style.visibility = "";
 }
 
@@ -272,6 +483,12 @@ async function deal() {
     if (handInProgress) {
         return;
     }
+    const holdingDeckTop = activeCardDrag &&
+        activeCardDrag.dragging &&
+        activeCardDrag.original === deckStackElement.lastElementChild;
+    if (!holdingDeckTop) {
+        cancelActiveCardDrag();
+    }
 
     deck = createDeck();
     playerHand = [];
@@ -330,6 +547,9 @@ function stand() {
 }
 
 initializeDeckStack();
+deckStackElement.addEventListener("pointerdown", startDraggingDeckCard);
+dealerCardsElement.addEventListener("pointerdown", startDraggingCard);
+playerCardsElement.addEventListener("pointerdown", startDraggingCard);
 dealButton.addEventListener("click", deal);
 hitButton.addEventListener("click", hit);
 standButton.addEventListener("click", stand);

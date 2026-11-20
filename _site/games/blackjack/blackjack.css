@@ -135,6 +135,28 @@ h2 {
     image-rendering: pixelated;
 }
 
+.cards img,
+.deck-stack img:last-child {
+    cursor: grab;
+    user-select: none;
+    -webkit-user-drag: none;
+    touch-action: none;
+}
+
+.cards img:active,
+.deck-stack img:last-child:active {
+    cursor: grabbing;
+}
+
+.card-dragging {
+    position: fixed;
+    z-index: 80;
+    display: block;
+    pointer-events: none;
+    image-rendering: pixelated;
+    user-select: none;
+}
+
 .message {
     min-height: 1.5em;
     margin: 18px 0 14px;
