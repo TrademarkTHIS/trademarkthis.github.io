@@ -3,9 +3,29 @@
 const suits = ["clubs", "diamonds", "hearts", "spades"];
 const ranks = ["02", "03", "04", "05", "06", "07", "08", "09", "10", "J", "Q", "K", "A"];
 const cardBack = "images/cards/card_back.png";
+const soundCollections = {
+    slide: [
+        "card-slide-1.ogg",
+        "card-slide-2.ogg",
+        "card-slide-3.ogg",
+        "card-slide-4.ogg",
+        "card-slide-5.ogg",
+        "card-slide-6.ogg",
+        "card-slide-7.ogg",
+        "card-slide-8.ogg",
+    ],
+    place: [
+        "card-place-1.ogg",
+        "card-place-2.ogg",
+        "card-place-3.ogg",
+        "card-place-4.ogg",
+    ],
+    shuffle: ["card-shuffle.ogg"],
+};
 
 const dealerCardsElement = document.getElementById("dealer-cards");
 const playerCardsElement = document.getElementById("player-cards");
+const deckStackElement = document.getElementById("deck-stack");
 const dealerScoreElement = document.getElementById("dealer-score");
 const playerScoreElement = document.getElementById("player-score");
 const messageElement = document.getElementById("message");
@@ -17,6 +37,7 @@ let deck = [];
 let playerHand = [];
 let dealerHand = [];
 let handInProgress = false;
+let isAnimating = false;
 let dealerRevealed = true;
 
 function createDeck() {
@@ -75,6 +96,16 @@ function makeCardImage(src, alt) {
     return image;
 }
 
+function playRandomSound(collection) {
+    const sounds = soundCollections[collection];
+    const sound = sounds[Math.floor(Math.random() * sounds.length)];
+    const audio = new Audio(`audio/${sound}`);
+    audio.volume = 0.35;
+    audio.play().catch((error) => {
+        console.warn(`Unable to play the ${collection} card sound.`, error);
+    });
+}
+
 function renderHand(container, hand, hideHoleCard) {
     while (container.children.length > hand.length) {
         container.removeChild(container.lastElementChild);
@@ -100,6 +131,50 @@ function renderHand(container, hand, hideHoleCard) {
     });
 }
 
+async function animateCard(image) {
+    const deckTopCard = deckStackElement.lastElementChild;
+    if (!deckTopCard || typeof image.animate !== "function" ||
+        (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+        return;
+    }
+
+    const source = deckTopCard.getBoundingClientRect();
+    const target = image.getBoundingClientRect();
+    const flight = makeCardImage(image.src, "");
+    flight.classList.add("dealing-card");
+    flight.setAttribute("aria-hidden", "true");
+    flight.style.left = `${source.left}px`;
+    flight.style.top = `${source.top}px`;
+    flight.style.width = `${target.width}px`;
+    flight.style.height = `${target.height}px`;
+    document.body.append(flight);
+    image.style.visibility = "hidden";
+    playRandomSound("slide");
+
+    const horizontalDistance = target.left - source.left;
+    const verticalDistance = target.top - source.top;
+    const rotation = (Math.random() * 6) - 3;
+    const animation = flight.animate(
+        [
+            { transform: "translate(0, 0) rotate(0deg)" },
+            { transform: `translate(${horizontalDistance}px, ${verticalDistance}px) rotate(${rotation}deg)` },
+        ],
+        { duration: 420, easing: "cubic-bezier(0.2, 0.7, 0.25, 1)" }
+    );
+
+    await animation.finished;
+    flight.remove();
+    image.style.visibility = "";
+}
+
+async function dealCardToHand(hand, container) {
+    hand.push(drawCard());
+    render();
+    const image = container.lastElementChild;
+    await animateCard(image);
+    //playRandomSound("place");
+}
+
 function render() {
     renderHand(dealerCardsElement, dealerHand, !dealerRevealed);
     renderHand(playerCardsElement, playerHand, false);
@@ -111,9 +186,9 @@ function render() {
             : `(${cardValue(dealerHand[0])} + ?)`;
     playerScoreElement.textContent = playerHand.length === 0 ? "" : `(${handValue(playerHand)})`;
 
-    hitButton.disabled = !handInProgress;
-    standButton.disabled = !handInProgress;
-    dealButton.disabled = handInProgress;
+    hitButton.disabled = !handInProgress || isAnimating;
+    standButton.disabled = !handInProgress || isAnimating;
+    dealButton.disabled = handInProgress || isAnimating;
     dealButton.textContent = playerHand.length === 0 ? "Deal" : "Play again";
 }
 
@@ -123,6 +198,7 @@ function setMessage(text) {
 
 function finishRound(result, outcome) {
     handInProgress = false;
+    isAnimating = false;
     dealerRevealed = true;
     if (outcome === "win") {
         const coinAwarded = window.gameCoinWallet.awardWin();
@@ -159,15 +235,18 @@ function resolveRound() {
     }
 }
 
-function dealerTurn() {
+async function dealerTurn() {
     dealerRevealed = true;
+    isAnimating = true;
+    render();
     while (handValue(dealerHand) < 17) {
-        dealerHand.push(drawCard());
+        await dealCardToHand(dealerHand, dealerCardsElement);
     }
+    isAnimating = false;
     resolveRound();
 }
 
-function deal() {
+async function deal() {
     if (handInProgress) {
         return;
     }
@@ -176,10 +255,14 @@ function deal() {
     playerHand = [];
     dealerHand = [];
     handInProgress = true;
+    isAnimating = true;
     dealerRevealed = false;
+    render();
 
-    playerHand.push(drawCard(), drawCard());
-    dealerHand.push(drawCard(), drawCard());
+    await dealCardToHand(playerHand, playerCardsElement);
+    await dealCardToHand(dealerHand, dealerCardsElement);
+    await dealCardToHand(playerHand, playerCardsElement);
+    await dealCardToHand(dealerHand, dealerCardsElement);
 
     const playerNatural = handValue(playerHand) === 21;
     const dealerNatural = handValue(dealerHand) === 21;
@@ -194,22 +277,25 @@ function deal() {
         dealerRevealed = true;
         finishRound("Dealer has blackjack. You lose this hand.", "loss");
     } else {
+        isAnimating = false;
         setMessage("Your move: hit or stand.");
         render();
     }
 }
 
-function hit() {
+async function hit() {
     if (!handInProgress) {
         return;
     }
-    playerHand.push(drawCard());
+    isAnimating = true;
+    await dealCardToHand(playerHand, playerCardsElement);
     if (handValue(playerHand) > 21) {
         dealerRevealed = true;
         resolveRound();
     } else if (handValue(playerHand) === 21) {
-        dealerTurn();
+        await dealerTurn();
     } else {
+        isAnimating = false;
         setMessage("Your move: hit or stand.");
         render();
     }
@@ -217,7 +303,7 @@ function hit() {
 
 function stand() {
     if (handInProgress) {
-        dealerTurn();
+        void dealerTurn();
     }
 }
 

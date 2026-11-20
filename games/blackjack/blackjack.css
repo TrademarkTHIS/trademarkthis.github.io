@@ -47,6 +47,50 @@ h1 {
     line-height: 1.5;
 }
 
+.deck-stack {
+    position: relative;
+    width: 76px;
+    height: 76px;
+    margin: 0 auto;
+}
+
+.deck-stack img {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 76px;
+    height: 76px;
+    image-rendering: pixelated;
+}
+
+.deck-stack img:nth-child(1) {
+    transform: translate(-5px, -5px);
+}
+
+.deck-stack img:nth-child(2) {
+    transform: translate(-4px, -4px);
+}
+
+.deck-stack img:nth-child(3) {
+    transform: translate(-3px, -3px);
+}
+
+.deck-stack img:nth-child(4) {
+    transform: translate(-2px, -2px);
+}
+
+.deck-stack img:nth-child(5) {
+    transform: translate(-1px, -1px);
+}
+
+.dealing-card {
+    position: fixed;
+    z-index: 70;
+    display: block;
+    pointer-events: none;
+    image-rendering: pixelated;
+}
+
 .hand {
     min-height: 150px;
     padding: 14px 0;
